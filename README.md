@@ -726,12 +726,12 @@ Future extensions including multilingual support, interactive summarization, and
 
 ## Contact and Contribution
 
-**Author**: [Your Name]  
-**Institution**: [Your Institution]  
+**Author**: Ubaid Ullah  
+**Institution**: Pak-Austria Fachhochschule: Institute of Applied Sciences & Technology  
 **Course**: Natural Language Processing  
-**Semester**: [Current Semester]
+**Semester**: 7th
 
-For questions, suggestions, or collaboration opportunities, please contact: [Your Email]
+For questions, suggestions, or collaboration opportunities, please contact: ubaidullahyaqoob19@gmail.com
 
 ---
 
