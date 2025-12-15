@@ -636,6 +636,32 @@ Expected performance improvements over baseline methods:
 
 ---
 
+## Web Demo Implementation (This Repository)
+
+The `frontend/` and `backend/` folders implement the hybrid web experience specified above:
+
+- **Backend (`backend/`)** – FastAPI service with the complete Python pipeline: Sentence-BERT + TextRank + handcrafted features for extraction, BART-large with beam search and coverage controls for abstraction, repetition-aware post-processing, and `/evaluate` endpoints for ROUGE/BLEU/METEOR/BERTScore benchmarking.
+- **Frontend (`frontend/`)** – React + Vite SPA that captures long-form documents, displays generated summaries alongside the extractive “seed” sentences, and optionally scores model output against human references.
+
+### Running the stack
+
+```bash
+# Backend
+python -m venv .venv && .venv\Scripts\activate
+pip install -r backend/requirements.txt
+python -m spacy download en_core_web_sm
+python backend/main.py  # FastAPI on http://localhost:8000
+
+# Frontend
+cd frontend
+npm install
+npm run dev  # http://localhost:5173
+```
+
+Set `VITE_API_BASE_URL` if the API runs on a non-local address.
+
+---
+
 ## Code Structure
 
 ```
@@ -726,12 +752,12 @@ Future extensions including multilingual support, interactive summarization, and
 
 ## Contact and Contribution
 
-**Author**: Ubaid Ullah  
-**Institution**: Pak-Austria Fachhochschule: Institute of Applied Sciences & Technology  
+**Author**: [Your Name]  
+**Institution**: [Your Institution]  
 **Course**: Natural Language Processing  
-**Semester**: 7th
+**Semester**: [Current Semester]
 
-For questions, suggestions, or collaboration opportunities, please contact: ubaidullahyaqoob19@gmail.com
+For questions, suggestions, or collaboration opportunities, please contact: [Your Email]
 
 ---
 
