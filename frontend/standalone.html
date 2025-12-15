@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hybrid Text Summarization</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .control-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result-box {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            min-height: 100px;
+        }
+
+        .result-box h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .result-box p {
+            line-height: 1.6;
+            color: #333;
+            white-space: pre-wrap;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #fee;
+            border: 2px solid #fcc;
+            color: #c33;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .extractive-sentences {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .extractive-sentences h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .extractive-sentences ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .extractive-sentences li {
+            background: #f0f0f0;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+
+        .file-upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .file-upload-area:hover {
+            border-color: #764ba2;
+            background: #f0f0f0;
+        }
+
+        .file-upload-area.dragover {
+            border-color: #764ba2;
+            background: #e8e8ff;
+        }
+
+        .file-upload-area input[type="file"] {
+            display: none;
+        }
+
+        .file-upload-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .file-upload-text {
+            color: #667eea;
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .file-upload-hint {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .file-info {
+            margin-top: 15px;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .file-info.active {
+            display: block;
+        }
+
+        .file-info-name {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .file-info-size {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .input-mode-toggle {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .mode-btn.active {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        .mode-btn:hover {
+            border-color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📝 Hybrid Text Summarization</h1>
+            <p>Extractive-Abstractive Summarization System</p>
+        </div>
+
+        <div class="content">
+            <div class="input-mode-toggle">
+                <button class="mode-btn active" id="textModeBtn" onclick="switchMode('text')">📝 Paste Text</button>
+                <button class="mode-btn" id="fileModeBtn" onclick="switchMode('file')">📄 Upload File</button>
+            </div>
+
+            <div id="textInputSection" class="section">
+                <h2>Source Document</h2>
+                <textarea id="document" placeholder="Paste your document here... (minimum 50 characters)"></textarea>
+            </div>
+
+            <div id="fileInputSection" class="section" style="display: none;">
+                <h2>Upload Document</h2>
+                <div class="file-upload-area" id="fileUploadArea" onclick="document.getElementById('fileInput').click()">
+                    <div class="file-upload-icon">📁</div>
+                    <div class="file-upload-text">Click to upload or drag and drop</div>
+                    <div class="file-upload-hint">
+                        Supported: PDF, DOCX, TXT, MD, Images (PNG, JPG, etc.)<br>
+                        Images will be processed with OCR
+                    </div>
+                    <input type="file" id="fileInput" accept=".pdf,.docx,.doc,.txt,.md,.png,.jpg,.jpeg,.gif,.bmp,.tiff,.webp" onchange="handleFileSelect(event)">
+                </div>
+                <div class="file-info" id="fileInfo">
+                    <div class="file-info-name" id="fileName"></div>
+                    <div class="file-info-size" id="fileSize"></div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <div class="control-group">
+                    <label for="topK">Top K Sentences:</label>
+                    <input type="number" id="topK" value="5" min="3" max="10">
+                </div>
+                <div class="control-group">
+                    <label for="maxLength">Max Length:</label>
+                    <input type="number" id="maxLength" value="150" min="60" max="300">
+                </div>
+                <div class="control-group">
+                    <label for="minLength">Min Length:</label>
+                    <input type="number" id="minLength" value="60" min="30" max="150">
+                </div>
+            </div>
+
+            <button id="summarizeBtn" onclick="summarize()">Generate Summary</button>
+            <button id="evaluateBtn" onclick="showEvaluate()" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">Evaluate Summary</button>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Processing your document... This may take a moment.</p>
+            </div>
+
+            <div id="error" class="error" style="display: none;"></div>
+
+            <div id="result" class="result-box" style="display: none;">
+                <h3>Generated Summary</h3>
+                <p id="summaryText"></p>
+                <div class="stats" id="stats"></div>
+                <div class="extractive-sentences" id="extractiveSection" style="display: none;">
+                    <h4>Extracted Sentences (used as input to abstractive model):</h4>
+                    <ul id="extractiveList"></ul>
+                </div>
+            </div>
+
+            <div id="evaluateSection" style="display: none; margin-top: 30px;">
+                <div class="section">
+                    <h2>Reference Summary (for evaluation)</h2>
+                    <textarea id="referenceSummary" placeholder="Paste the reference/human-written summary here..."></textarea>
+                    <button onclick="evaluate()" style="margin-top: 10px;">Calculate Metrics</button>
+                </div>
+                <div id="evaluateResult" class="result-box" style="display: none;">
+                    <h3>Evaluation Metrics</h3>
+                    <div class="stats" id="metrics"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:8000';
+        let currentMode = 'text';
+        let selectedFile = null;
+
+        function switchMode(mode) {
+            currentMode = mode;
+            document.getElementById('textModeBtn').classList.toggle('active', mode === 'text');
+            document.getElementById('fileModeBtn').classList.toggle('active', mode === 'file');
+            document.getElementById('textInputSection').style.display = mode === 'text' ? 'block' : 'none';
+            document.getElementById('fileInputSection').style.display = mode === 'file' ? 'block' : 'none';
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                selectedFile = file;
+                displayFileInfo(file);
+            }
+        }
+
+        function displayFileInfo(file) {
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileSize').textContent = formatFileSize(file.size);
+            document.getElementById('fileInfo').classList.add('active');
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        // Drag and drop handlers (initialize after DOM loads)
+        document.addEventListener('DOMContentLoaded', () => {
+            const fileUploadArea = document.getElementById('fileUploadArea');
+            if (fileUploadArea) {
+                fileUploadArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    fileUploadArea.classList.add('dragover');
+                });
+
+                fileUploadArea.addEventListener('dragleave', () => {
+                    fileUploadArea.classList.remove('dragover');
+                });
+
+                fileUploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    fileUploadArea.classList.remove('dragover');
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        selectedFile = files[0];
+                        const fileInput = document.getElementById('fileInput');
+                        // Create a new FileList-like object
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(selectedFile);
+                        fileInput.files = dataTransfer.files;
+                        displayFileInfo(selectedFile);
+                    }
+                });
+            }
+        });
+
+        async function summarize() {
+            if (currentMode === 'file') {
+                await summarizeFile();
+                return;
+            }
+
+            // Original text summarization
+            const docText = document.getElementById('document').value.trim();
+            if (docText.length < 50) {
+                showError('Document must be at least 50 characters long.');
+                return;
+            }
+
+            const topK = parseInt(document.getElementById('topK').value);
+            const maxLength = parseInt(document.getElementById('maxLength').value);
+            const minLength = parseInt(document.getElementById('minLength').value);
+
+            setLoading(true);
+            hideError();
+            hideResult();
+
+            try {
+                const response = await fetch(`${API_BASE}/summarize`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        document: docText,
+                        top_k: topK,
+                        max_length: maxLength,
+                        min_length: minLength,
+                        run_postprocess: true,
+                        return_extractive_sentences: true
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Failed to generate summary');
+                }
+
+                const data = await response.json();
+                displayResult(data);
+            } catch (error) {
+                showError('Error: ' + error.message + '. Make sure the backend server is running at ' + API_BASE);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        async function summarizeFile() {
+            if (!selectedFile) {
+                showError('Please select a file first.');
+                return;
+            }
+
+            const topK = parseInt(document.getElementById('topK').value);
+            const maxLength = parseInt(document.getElementById('maxLength').value);
+            const minLength = parseInt(document.getElementById('minLength').value);
+
+            setLoading(true);
+            hideError();
+            hideResult();
+
+            try {
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+                if (topK) formData.append('top_k', topK);
+                if (maxLength) formData.append('max_length', maxLength);
+                if (minLength) formData.append('min_length', minLength);
+                formData.append('run_postprocess', 'true');
+                formData.append('return_extractive_sentences', 'true');
+
+                const response = await fetch(`${API_BASE}/summarize-file`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Failed to generate summary');
+                }
+
+                const data = await response.json();
+                displayResult(data);
+            } catch (error) {
+                showError('Error: ' + error.message + '. Make sure the backend server is running at ' + API_BASE);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function displayResult(data) {
+            document.getElementById('summaryText').textContent = data.summary || 'No summary generated.';
+            
+            const stats = document.getElementById('stats');
+            stats.innerHTML = `
+                <div class="stat">
+                    <div class="stat-label">Compression Ratio</div>
+                    <div class="stat-value">${(data.compression_ratio * 100).toFixed(1)}%</div>
+                </div>
+                ${data.timings ? `
+                <div class="stat">
+                    <div class="stat-label">Extractive Time</div>
+                    <div class="stat-value">${(data.timings.extractive || 0).toFixed(2)}s</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Abstractive Time</div>
+                    <div class="stat-value">${(data.timings.abstractive || 0).toFixed(2)}s</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Total Time</div>
+                    <div class="stat-value">${(data.timings.total || 0).toFixed(2)}s</div>
+                </div>
+                ` : ''}
+            `;
+
+            if (data.extractive_sentences && data.extractive_sentences.length > 0) {
+                const list = document.getElementById('extractiveList');
+                list.innerHTML = data.extractive_sentences.map(s => `<li>${s}</li>`).join('');
+                document.getElementById('extractiveSection').style.display = 'block';
+            }
+
+            document.getElementById('result').style.display = 'block';
+        }
+
+        async function evaluate() {
+            const generated = document.getElementById('summaryText').textContent;
+            const reference = document.getElementById('referenceSummary').value.trim();
+
+            if (!generated || generated === 'No summary generated.') {
+                showError('Please generate a summary first.');
+                return;
+            }
+
+            if (!reference) {
+                showError('Please provide a reference summary.');
+                return;
+            }
+
+            setLoading(true);
+            hideError();
+
+            try {
+                const response = await fetch(`${API_BASE}/evaluate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        generated_summary: generated,
+                        reference_summary: reference,
+                        metrics: ['rouge', 'bleu', 'meteor', 'bertscore']
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Failed to evaluate');
+                }
+
+                const data = await response.json();
+                displayMetrics(data.scores);
+            } catch (error) {
+                showError('Error: ' + error.message);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        function displayMetrics(scores) {
+            const metricsDiv = document.getElementById('metrics');
+            let html = '';
+
+            if (scores.rouge) {
+                html += `
+                    <div class="stat">
+                        <div class="stat-label">ROUGE-1</div>
+                        <div class="stat-value">${(scores.rouge.rouge1 * 100).toFixed(2)}%</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">ROUGE-2</div>
+                        <div class="stat-value">${(scores.rouge.rouge2 * 100).toFixed(2)}%</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-label">ROUGE-L</div>
+                        <div class="stat-value">${(scores.rouge.rougeL * 100).toFixed(2)}%</div>
+                    </div>
+                `;
+            }
+
+            if (scores.bleu !== undefined) {
+                html += `
+                    <div class="stat">
+                        <div class="stat-label">BLEU</div>
+                        <div class="stat-value">${(scores.bleu * 100).toFixed(2)}%</div>
+                    </div>
+                `;
+            }
+
+            if (scores.meteor !== undefined) {
+                html += `
+                    <div class="stat">
+                        <div class="stat-label">METEOR</div>
+                        <div class="stat-value">${(scores.meteor * 100).toFixed(2)}%</div>
+                    </div>
+                `;
+            }
+
+            if (scores.bertscore) {
+                html += `
+                    <div class="stat">
+                        <div class="stat-label">BERTScore F1</div>
+                        <div class="stat-value">${(scores.bertscore.f1 * 100).toFixed(2)}%</div>
+                    </div>
+                `;
+            }
+
+            metricsDiv.innerHTML = html;
+            document.getElementById('evaluateResult').style.display = 'block';
+        }
+
+        function showEvaluate() {
+            const section = document.getElementById('evaluateSection');
+            section.style.display = section.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function setLoading(show) {
+            document.getElementById('loading').classList.toggle('active', show);
+            document.getElementById('summarizeBtn').disabled = show;
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
+        }
+
+        function hideResult() {
+            document.getElementById('result').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
+
