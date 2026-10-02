@@ -1,0 +1,43 @@
+app:
+  host: 0.0.0.0
+  port: 8000
+  reload: true
+  log_level: info
+
+models:
+  extractive:
+    embedding_model: all-MiniLM-L6-v2
+    max_sentences: 50
+    top_k_short: 3
+    top_k_long: 7
+    redundancy_lambda: 0.7
+    position_bias: 1.25
+    textrank_damping: 0.85
+  abstractive:
+    model_name: facebook/bart-large-cnn
+    device: auto
+    max_input_length: 1024
+    max_output_length: 150
+    min_output_length: 60
+    num_beams: 4
+    length_penalty: 2.0
+    no_repeat_ngram_size: 3
+    early_stopping: true
+
+postprocessing:
+  trigram_block: true
+  target_length_ratio: 0.07
+  repetition_threshold: 0.85
+
+evaluation:
+  metrics:
+    - rouge
+    - bleu
+    - meteor
+    - bertscore
+
+data:
+  cache_dir: ./models/pretrained
+  nltk_data_dir: ./data/nltk
+
+
